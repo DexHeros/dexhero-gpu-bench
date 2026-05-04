@@ -18,9 +18,28 @@ find_package(Vulkan REQUIRED)
 find_package(OpenSSL REQUIRED)
 
 # libsecp256k1 — sign.cpp uses it for EIP-191 ECDSA recovery-id signing.
-# pkg-config exposes it on most distros + MSYS2.
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SECP256K1 REQUIRED IMPORTED_TARGET libsecp256k1)
+# Try pkg-config first (linux/macos via apt/brew), fall back to FetchContent
+# (MSYS2 ucrt64 doesn't ship it as a package).
+find_package(PkgConfig)
+set(SECP256K1_FOUND FALSE)
+if(PkgConfig_FOUND)
+    pkg_check_modules(SECP256K1 IMPORTED_TARGET libsecp256k1)
+endif()
+if(NOT SECP256K1_FOUND)
+    message(STATUS "libsecp256k1 not found via pkg-config; fetching source")
+    include(FetchContent)
+    set(SECP256K1_BUILD_BENCHMARK   OFF CACHE BOOL "" FORCE)
+    set(SECP256K1_BUILD_TESTS       OFF CACHE BOOL "" FORCE)
+    set(SECP256K1_BUILD_EXHAUSTIVE_TESTS OFF CACHE BOOL "" FORCE)
+    set(SECP256K1_BUILD_EXAMPLES    OFF CACHE BOOL "" FORCE)
+    set(SECP256K1_ENABLE_MODULE_RECOVERY ON CACHE BOOL "" FORCE)
+    set(SECP256K1_INSTALL           OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(secp256k1
+        GIT_REPOSITORY https://github.com/bitcoin-core/secp256k1.git
+        GIT_TAG        v0.5.0
+        GIT_SHALLOW    TRUE)
+    FetchContent_MakeAvailable(secp256k1)
+endif()
 
 add_executable(dexhero-gpu-bench
     bench.cpp
@@ -36,8 +55,12 @@ target_include_directories(dexhero-gpu-bench PRIVATE ${Vulkan_INCLUDE_DIRS})
 target_link_libraries(dexhero-gpu-bench PRIVATE
     Vulkan::Vulkan
     OpenSSL::Crypto
-    PkgConfig::SECP256K1
 )
+if(SECP256K1_FOUND)
+    target_link_libraries(dexhero-gpu-bench PRIVATE PkgConfig::SECP256K1)
+else()
+    target_link_libraries(dexhero-gpu-bench PRIVATE secp256k1)
+endif()
 
 if(WIN32)
     target_link_libraries(dexhero-gpu-bench PRIVATE bcrypt)

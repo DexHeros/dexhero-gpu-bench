@@ -32,7 +32,6 @@ jobs:
             mingw-w64-ucrt-x86_64-vulkan-headers
             mingw-w64-ucrt-x86_64-vulkan-loader
             mingw-w64-ucrt-x86_64-glslang
-            mingw-w64-ucrt-x86_64-libsecp256k1
             mingw-w64-ucrt-x86_64-openssl
 
       - name: Configure
