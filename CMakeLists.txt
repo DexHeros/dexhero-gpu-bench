@@ -14,6 +14,14 @@ endif()
 # probes NVENC/VAAPI/VideoToolbox separately at runtime.
 find_package(Vulkan REQUIRED)
 
+# OpenSSL — sign.cpp uses EVP_Digest for keccak256 fallback path.
+find_package(OpenSSL REQUIRED)
+
+# libsecp256k1 — sign.cpp uses it for EIP-191 ECDSA recovery-id signing.
+# pkg-config exposes it on most distros + MSYS2.
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SECP256K1 REQUIRED IMPORTED_TARGET libsecp256k1)
+
 add_executable(dexhero-gpu-bench
     bench.cpp
     bench_compute.cpp
@@ -25,7 +33,11 @@ add_executable(dexhero-gpu-bench
 )
 
 target_include_directories(dexhero-gpu-bench PRIVATE ${Vulkan_INCLUDE_DIRS})
-target_link_libraries(dexhero-gpu-bench PRIVATE Vulkan::Vulkan)
+target_link_libraries(dexhero-gpu-bench PRIVATE
+    Vulkan::Vulkan
+    OpenSSL::Crypto
+    PkgConfig::SECP256K1
+)
 
 if(WIN32)
     target_link_libraries(dexhero-gpu-bench PRIVATE bcrypt)

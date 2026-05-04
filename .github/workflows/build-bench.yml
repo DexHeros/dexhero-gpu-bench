@@ -32,6 +32,8 @@ jobs:
             mingw-w64-ucrt-x86_64-vulkan-headers
             mingw-w64-ucrt-x86_64-vulkan-loader
             mingw-w64-ucrt-x86_64-glslang
+            mingw-w64-ucrt-x86_64-libsecp256k1
+            mingw-w64-ucrt-x86_64-openssl
 
       - name: Configure
         shell: msys2 {0}
@@ -61,10 +63,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Install Vulkan + glslang
+      - name: Install Vulkan + glslang + secp256k1 + openssl
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build libvulkan-dev glslang-tools
+          sudo apt-get install -y cmake ninja-build libvulkan-dev glslang-tools libsecp256k1-dev libssl-dev pkg-config
       - name: Configure + Build
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -79,8 +81,8 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-      - name: Install Vulkan SDK + glslang via brew
-        run: brew install cmake ninja vulkan-headers vulkan-loader molten-vk glslang
+      - name: Install Vulkan SDK + glslang + secp256k1 + openssl via brew
+        run: brew install cmake ninja vulkan-headers vulkan-loader molten-vk glslang secp256k1 openssl pkg-config
       - name: Configure + Build
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
