@@ -1,0 +1,23 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// compute.comp — Vulkan compute shader for the bench's compute phase.
+// Compiled to SPIR-V at build time via glslangValidator.
+
+#version 450
+layout(local_size_x = 64) in;
+
+layout(set = 0, binding = 0) buffer InOut {
+    float data[];
+} buf;
+
+// Simple FFT-style butterfly across the workgroup. Real benchmarks would
+// run a proper radix-2 FFT; this single-stage variant is enough to
+// stress compute throughput without taking a math library dependency.
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx >= buf.data.length()) return;
+    float v = buf.data[idx];
+    for (int i = 0; i < 256; ++i) {
+        v = sin(v) * cos(v) + 1.0;
+    }
+    buf.data[idx] = v;
+}
